@@ -1,0 +1,3 @@
+Tags	GO ID	GO Name	GO Category	FDR	P-Value	Nr Test	Nr Reference	Non Annot Test	Non Annot Reference
+[OVER]	GO:0005788	endoplasmic reticulum lumen	CELLULAR_COMPONENT	0.0032253914314638032	1.2766748857915623E-7	10	304	42	14278
+[OVER]	GO:0034663	endoplasmic reticulum chaperone complex	CELLULAR_COMPONENT	0.010247219471915975	8.112111678210873E-7	4	17	48	14565
