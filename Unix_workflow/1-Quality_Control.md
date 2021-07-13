@@ -56,7 +56,7 @@ perl temp2.pl >1.sh
 ```shell
 split -l 33 1.sh trim  # "trim" as the prefix  
 vi temp3.pl
-```shell
+```
 ```perl
 open fil, "$ARGV[0]";  
 while (<fil>) {  
@@ -69,7 +69,7 @@ nohup perl temp3.pl trimaa &
 nohup perl temp3.pl trimab &  
 nohup perl temp3.pl trimac &  
 nohup perl temp3.pl trimad &  
-```shell
+```
 #### extract Trimmomatic process results  
 ```shell
 vi temp5.pl  
