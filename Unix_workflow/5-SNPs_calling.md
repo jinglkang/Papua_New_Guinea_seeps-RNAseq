@@ -4,17 +4,21 @@ GATK SNPs calling
 ### gatk_rna.pl to do the SNPs calling and initial filtering    
 ### Acura.fa, Daru.fa, Ocomp.fa, Padel.fa, Pmol.fa, Apoly.fa in ./final_reference    
 ## _A. curacao_    
+```shell
 mkdir Acura_gatk  # the alignment bam file of Acura should be moved here    
-cd Acura_gatk    
+cd Acura_gatk 
+```
 ### run perl gatk_rna.pl, the resulted final vcf file (Acura.all.snp.final.vcf) would be in ./Acura_gatk    
+```shell
 nohup perl gatk_rna.pl --fasta ./Acura.fa --bam . --tmp tmp --output Acura_gatk >Acura_gatk.process 2>&1 &  
 cd ./Acura_gatk
 vi temp1.pl
+```
 #### vcf SNPs file：keep loci with "PASS" flag, maximun heterozygosity <0.8 and minor allele frequency >=0.1    
+```perl
 use List::Util qw/max min/;  
 open fil, "$ARGV[0]";  
 while (<fil>) {  
-
         %hash=();  
         %het=();  
         $het=0;  
@@ -57,9 +61,12 @@ while (<fil>) {
                 }  
         }  
 }  
+```
+```shell
 perl temp1.pl Acura.all.snp.final.vcf >Acura.all.snp.final.passed-1.vcf  
 grep -v '^#' Acura.all.snp.final.passed-1.vcf|wc -l    
 26 # 26 SNPs in Acura  
+```
 
 ############
 ### Bayescan
@@ -67,12 +74,15 @@ grep -v '^#' Acura.all.snp.final.passed-1.vcf|wc -l
 #### transform vcf file to genetype file, which would be the input of bayescan  
 #### sample_def.txt is the infromation where the sample come from, the output file (loci-numb-id.bayescan) tells the correslation bettwen the SNPs loci and the id that used in the Bayescan  
 #### change the information of population in the sample_def.txt to set the population num  
+```shell
 perl vcf_bayescan.pl --vcf Acura.all.snp.final.passed-1.vcf --pop_def sample_def.txt --id_correlation_num loci-numb-id.bayescan >Acura_bayecan.input  
 BayeScan -snp Acura_bayecan.input  
+```
     
 #############
 ### admixture
 #############
+```shell
 plink --vcf Acura.all.snp.final.passed.vcf --recode --out my_data --allow-extra-chr 0 --make-bed  
 for K in 1 2 3 4 5 6 7 8 9 10; do admixture --cv my_data.bed $K | tee log${K}.out; done  
 grep -h CV log*.out  
@@ -86,8 +96,10 @@ CV error (K=6): 0.90621
 CV error (K=7): 0.94013  
 CV error (K=8): 0.78433  
 CV error (K=9): 0.68934  
+```
   
 ## _A. polyacanthus_  
+```shell
 mkdir Apoly_gatk  
 cd Apoly_gatk    
 nohup perl gatk_rna.pl --fasta ./Apoly.fa --bam . --tmp tmp --output Apoly_gatk >Apoly_gatk.process 2>&1 &  
@@ -96,16 +108,19 @@ cd ./Apoly_gatk
 perl temp1.pl Apoly.all.snp.final.vcf >Apoly.all.snp.final.passed-1.vcf     
 grep -v '^#' Apoly.all.snp.final.passed-1.vcf|wc -l    
 1035 # 1035 SNPs in Apoly  
+```
   
 ############
 ### Bayescan
 ############
+```shell
 perl vcf_bayescan.pl --vcf Apoly.all.snp.final.passed-1.vcf --pop_def sample_def.txt --id_correlation_num loci-numb-id.bayescan >Apoly_bayecan.input  
 BayeScan -snp Apoly_bayecan.input  
-  
+```  
 #############
 ### admixture
 #############
+```shell
 plink --vcf Apoly.all.snp.final.passed-1.vcf --recode --out my_data --allow-extra-chr 0 --make-bed  
 for K in 1 2 3 4 5 6 7 8 9 10; do admixture --cv my_data.bed $K | tee log${K}.out; done  
 grep -h CV log*.out  
@@ -120,11 +135,12 @@ CV error (K=7): 1.32218
 CV error (K=8): 1.51571  
 CV error (K=9): 1.34219  
   
-
+```
 
 ############################################  
 ############################################  
 ## _A. compressus_    
+```shell
 mkdir ./Acomp_gatk  
 nohup perl gatk_rna.pl --fasta ./Ocomp.fa --bam . --tmp tmp --output Acomp_gatk >Acomp_gatk.process 2>&1 &  
 cd ./Acomp_gatk  
@@ -132,19 +148,23 @@ cd ./Acomp_gatk
 perl temp1.pl Acomp.all.snp.final.vcf >Acomp.all.snp.final.passed-1.vcf     
 grep -v '^#' Acomp.all.snp.final.passed-1.vcf|wc -l    
 452 # 452 SNPs in Acomp  
+```
 
 ############
 ### Bayescan
 ############
+```shell
 perl vcf_bayescan.pl --vcf Acomp.all.snp.final.passed-1.vcf --pop_def sample_def.txt --id_correlation_num loci-numb-id.bayescan >Acomp_bayecan.input  
 BayeScan -snp Acomp_bayecan.input  
-
+```
 #############
 ### admixture
 #############
+```shell
 plink --vcf Acomp.all.snp.final.passed-1.vcf --recode --out my_data --allow-extra-chr 0 --make-bed  
-
+```
 # admixture  
+```shell
 grep -h CV log*.out  
 CV error (K=10): 1.91282  
 CV error (K=1): 0.49162  
@@ -156,9 +176,10 @@ CV error (K=6): 1.61921
 CV error (K=7): 1.50137  
 CV error (K=8): 1.38740  
 CV error (K=9): 1.01894  
-  
+```  
 
 ## _D. aruanus_    
+```shell
 mkdir Daru_gatk  
 nohup perl gatk_rna.pl --fasta ./Daru.fa --bam . --tmp tmp --output Daru_gatk >Daru_gatk.process 2>&1 &  
 cd ./Daru_gatk  
@@ -166,16 +187,18 @@ cd ./Daru_gatk
 perl temp1.pl Daru.all.snp.final.vcf >Daru.all.snp.final.passed-1.vcf     
 grep -v '^#' Daru.all.snp.final.passed-1.vcf|wc -l    
 2105 # 2105 SNPs in Daru  
-
+```
 ############
 ### Bayescan
 ############
+```shell
 perl vcf_bayescan.pl --vcf Daru.all.snp.final-1.vcf --pop_def pop_def.txt --id_correlation_num Daru_loci-numb-id.bayescan >Daru_bayecan.input  
 BayeScan -snp Daru_bayecan.input  
-
+```
 #############
 ### admixture
 #############
+```shell
 plink --vcf Daru.all.snp.final.passed-1.vcf --recode --out my_data --allow-extra-chr 0 --make-bed  
 grep -h CV log*.out  
 CV error (K=10): 1.91880  
@@ -188,25 +211,30 @@ CV error (K=6): 1.46555
 CV error (K=7): 1.68151  
 CV error (K=8): 1.48244  
 CV error (K=9): 2.15463  
-  
+```  
 ## _P. adelus_  
+```shell
 mkdir Padel_gatk  
 nohup perl gatk_rna.pl --fasta ./Padel.fa --bam . --tmp tmp --output Padel_gatk >Padel_gatk.process 2>&1 &  
 cd ./Padel_gatk  
+```
 #### vcf SNPs file：keep loci with "PASS" flag, maximun heterozygosity <=0.8 and minor allele frequency >=0.1    
+```shell
 perl temp1.pl Padel.all.snp.final.vcf >Padel.all.snp.final.passed-1.vcf     
 grep -v '^#' Padel.all.snp.final.passed-1.vcf|wc -l    
 52 # 52 SNPs in Padel  
-
+```
 ############
 ### Bayescan
 ############
+```shell
 perl vcf_bayescan.pl --vcf Padel.all.snp.final-1.vcf --pop_def pop_def.txt --id_correlation_num Pmol_loci-numb-id.bayescan >Padel_bayecan.input  
 BayeScan -snp Padel_bayecan.input  
-
+```
 #############
 ### admixture
 #############
+```shell
 plink --vcf Padel.all.snp.final.passed-1.vcf --recode --out my_data --allow-extra-chr 0 --make-bed  
 grep -h CV log*.out  
 CV error (K=10): 0.73828  
@@ -219,25 +247,30 @@ CV error (K=6): 0.63551
 CV error (K=7): 0.76925  
 CV error (K=8): 0.89937  
 CV error (K=9): 0.76462  
-  
+```  
 ## _P. molluscensis_  
+```shell
 mkdir Pmol_gatk  
 nohup perl gatk_rna.pl --fasta ./Pmol.fa --bam . --tmp tmp --output Pmol_gatk >Pmol_gatk.process 2>&1 &  
 cd ./Pmol_gatk  
+```
 #### vcf SNPs file：keep loci with "PASS" flag, maximun heterozygosity <=0.8 and minor allele frequency >=0.1    
+```shell
 perl temp1.pl Pmol.all.snp.final.vcf >Pmol.all.snp.final.passed-1.vcf     
 grep -v '^#' Pmol.all.snp.final.passed-1.vcf|wc -l    
 63 # 63 SNPs in Pmol  
-
+```
 ############
 ### Bayescan
 ############
+```shell
 perl vcf_bayescan.pl --vcf Pmol.all.snp.final-1.vcf --pop_def pop_def.txt --id_correlation_num Pmol_loci-numb-id.bayescan >Pmol_bayecan.input  
 BayeScan -snp Pmol_bayecan.input  
-
+```
 #############
 ### admixture
 #############
+```shell
 plink --vcf Pmol.all.snp.final.passed-1.vcf --recode --out my_data --allow-extra-chr 0 --make-bed  
 grep -h CV log*.out  
 CV error (K=10): 0.83266  
@@ -250,3 +283,4 @@ CV error (K=6): 0.80991
 CV error (K=7): 0.74335  
 CV error (K=8): 0.97828  
 CV error (K=9): 0.79244  
+```
