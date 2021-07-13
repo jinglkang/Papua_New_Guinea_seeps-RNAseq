@@ -37,7 +37,6 @@ vi temp2.pl
 ```perl
 open fil, "sample.name";  
 while (<fil>) {  
-
         chomp;  
         $forward="_R1.fastq.gz";  
         $reverse="_R2.fastq.gz";  
@@ -61,7 +60,6 @@ vi temp3.pl
 ```perl
 open fil, "$ARGV[0]";  
 while (<fil>) {  
-
         chomp;  
         `$_`;  
 }  
@@ -79,7 +77,6 @@ vi temp5.pl
 ```perl
 open fil,"nohup.out";  
 while (<fil>) {  
-
         chomp;  
         if (/(\D+\d+_\D\d+)_R1\.fastq.gz/){  
                 $name=$1;  
@@ -158,7 +155,6 @@ vi temp1.pl
 ```perl
 @reports=<*report>;  
 foreach $report(@reports){  
-
 	open fil,"$report";  
 	while (<fil>){  
 		chomp;  
