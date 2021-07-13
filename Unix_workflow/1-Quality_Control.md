@@ -5,25 +5,36 @@ Quality Control
 #######################
 ### run FastQC
 ### fastq files of all samples are in the currently directory  
+```shell
 fastqc \*.fastq -o ./fastqc --extract -t 32  
+```
 ### extract the Overrepresented sequences into Overrepresented_sequences.txt   
+```shell
 find -name "fastqc_data.txt" >11  
 less 11|perl -ne 'chomp;print "$_\t"'|perl -alne 'print "cat $_ > all.samples.fastqc_data.txt"' > 1.sh  
 sh 1.sh  
 less all.samples.fastqc_data.txt|perl -alne 'print if /^[ATCG]{8,}/'|cut -f 1|sort -u > Overrepresented_sequences.txt  
+```
 ### generate TruSeq2-PE-new.fa into the adapter file of Trimmomatic, add overrepresent sequences into TruSeq2-PE-new.fa  
+```shell
 less Overrepresented_sequences.txt |perl -alne '$i++;$num=$i+2;print ">FlowCell$num\n$\_"' > Overrepresented_sequences.fa  
+```
 ### cat the index file (TruSeq2-PE.fa) in the install directory of Trimmomatic and Overrepresented_sequences.fa together
 ### and put TruSeq2-PE-new.fa and trimmomatic-0.30.jar in the current directory ./
+```shell
 cat TruSeq2-PE.fa Overrepresented_sequences.fa > TruSeq2-PE-new.fa  
+```
 
 #################################  
 ## 2. Trimmomatic  
 #################################  
+```shell
 mkdir paired  
 mkdir unpaired  
 ll *.gz|perl -alne '@a=split /\./,$F[-1];print"$a[0]"'|perl -alne 's/\_R[1|2]//;print'|sort -u >sample.name  
-vi temp2.pl  
+vi temp2.pl
+```
+```perl
 open fil, "sample.name";  
 while (<fil>) {  
 
@@ -37,23 +48,35 @@ while (<fil>) {
         $seq1_unpaired=$_.".unpaired".$forward;  
         $seq2_unpaired=$_.".unpaired".$forward;  
         print "java -jar trimmomatic-0.39.jar PE $seq1 $seq2 ./paired/$seq1_paired ./unpaired/$seq1_unpaired ./paired/$seq2_paired ./unpaired/$seq2_unpaired ILLUMINACLIP:TruSeq2-PE-new.fa:2:30:10 LEADING:4 TRAILING:3 SLIDINGWINDOW:4:20 MINLEN:40 -threads 32\n";  
-}  
-perl temp2.pl >1.sh  
+} 
+```
+```shell
+perl temp2.pl >1.sh
+```
 # split 1.sh into 4 files  
+```shell
 split -l 33 1.sh trim  # "trim" as the prefix  
-vi temp3.pl  
+vi temp3.pl
+```shell
+```perl
 open fil, "$ARGV[0]";  
 while (<fil>) {  
 
         chomp;  
         `$_`;  
 }  
+```
+```shell
 nohup perl temp3.pl trimaa &  
 nohup perl temp3.pl trimab &  
 nohup perl temp3.pl trimac &  
 nohup perl temp3.pl trimad &  
+```shell
 #### extract Trimmomatic process results  
+```shell
 vi temp5.pl  
+```
+```perl
 open fil,"nohup.out";  
 while (<fil>) {  
 
@@ -71,50 +94,68 @@ while (<fil>) {
                 print "$num[0]\t$num[1]\t$per1\t$num[4]\t$per2\t$num[7]\t$per3\t$num[10]\t$per4\n";  
         }  
 }  
+```
+```shell
 perl temp5.pl > Trimmomatic.result  
+```
 
 ######################  
 ## 3. FastQc (Second time)  
 ######################  
+```shell
 cd paired
 mkdir fastqc  
 fastqc *.fastq -o ./fastqc --extract -t 32  
+```
   
 ### compare the differences between fastqc result files (summary.txt) of two FastQc process  
 #### ./paired (FastQc second time)
+```shell
 cd ./paired
 find -name "summary.txt"|perl -ne 'chomp;print "$_\t"'|perl -alne 'print "cat $_ > all.samples.fastqc.txt"' >1.sh  
 sh 1.sh  
 perl temp1.pl >all.samples.second.fastqc.result  
+```
 #### ./ (FastQc first time)
+```shell
 find -name "summary.txt"|perl -ne 'chomp;print "$_\t"'|perl -alne 'print "cat $_ > all.samples.fastqc.txt"' >1.sh  
 sh 1.sh  
 perl temp1.pl >all.samples.first.fastqc.result  
-  
+```  
 #######################################  
 ## 4. Kraken to move potential contaminates
 #######################################  
 
 ### construct Kraken library (archaea, bacteria, fungi, viral)  in Kraken install directory 
+```shell
 mkdir library  
-cd library  
+cd library
+```
 #### download archaea, bacteria, fungi, viral  
+```shell
 kraken2-build --download-library archaea --db archaea  
 kraken2-build --download-library bacteria --db bacteria  
 kraken2-build --download-library fungi --db fungi  
 kraken2-build --download-library viral --db viral  
+```
 ### run Kraken
+```shell
 mkdir kraken  
 cd kraken  
 mkdir reports   ## kraken reports  
 mkdir total_output ## kraken output file  
+```
 #### working in ./paired  
+```shell
 for file in *.paired_R1.fastq.gz; do name=${file/.paired_R1.fastq.gz};kraken2 --db \~/software/kraken2/library --paired --threads 12 --gzip-compressed --unclassified-out kraken/${name}#.fastq ${name}.paired_R1.fastq.gz ${name}.paired_R2.fastq.gz --report kraken/reports/${name}.kraken_report --use-name --confidence 0.7 > kraken/total_output/${name}.out;done  
-  
+```  
 ## kraken result  
 ## get the dropped reads number and the drapped reads ratio in total reads  
+```shell
 cd ./kraken/reports  
-vi temp1.pl  
+vi temp1.pl
+```
+```perl
 @reports=<*report>;  
 foreach $report(@reports){  
 
@@ -138,4 +179,7 @@ foreach $report(@reports){
 		}  
 	}  
 }  
+```
+```shell
 perl temp1.pl >kraken.contaminate.ratio  
+```
