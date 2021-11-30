@@ -159,3 +159,137 @@ scp single_copy.concatenated.phy kang1234@147.8.76.155:~/CO2-seeps/annotation/se
 # SNORLAX: ~/CO2-seeps/annotation/second
 nohup raxmlHPC -f a -m PROTGAMMAAUTO -p 12345 -x 12345 -# 100 -s single_copy.concatenated.phy -o Spottedgar -n single_copy.concatenated -T 24 > raxml.process 2>&1 &
 ```
+***
+## MCMCtree
+## Extract the nucleotide sequence
+first to Get the id   
+```perl
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my @fasta=<single_copy/*.fa>;
+foreach my $fa (@fasta) {
+	open FIL, "$fa" or die "can not open $fa\n";
+	while (<FIL>) {
+		chomp;
+		if (/>/) {
+			s/>//;
+			if (! /\_ENS/) {
+				(my $spe)=$_=~/(.*?)\_/;
+				my $output=$spe.".id.txt";
+				open FILE, ">>$output" or die "can not create $output\n";
+				print FILE "$_\n";
+				close FILE;
+			} else {
+				(my $spe)=$_=~/(.*?)\_/;
+				s/(.*)\_//;
+				my $output=$spe.".id.txt";
+				open FILE, ">>$output" or die "can not create $output\n";
+				print FILE "$_\n";
+				close FILE;
+			}
+		}
+	}
+}
+```
+the id were save in \*.id.txt   
+```bash
+perl temp3.pl
+```
+## prepare the cds of Platyfish
+working dir: ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/OrthoFinder/Results_Nov30   
+```bash
+perl prep_Ensembl_cds.pl --fasta Platyfish.cds.all.fa
+```
+the result: Platyfish_cds.fasta   
+```bash
+perl Ensemble_longest_pep.pl --fasta Fugu.id.fa Medaka.id.fa Platyfish_cds.fasta Spottedgar.id.fa Zebrafish.id.fa Stickleback.id.fa Spottedgar.id.fa
+#Kang@fishlab3 Tue Nov 30 19:41:23 ~/Desktop/PapueNewGuinea-new/orthologue/orthofinder_input_nuc
+cp *.fa ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/OrthoFinder/Results_Nov30
+cat Longest_*id.fa Longest_Platyfish_cds.fasta *_nuc.fa >nuc_all_spe.fa
+```
+## put all cds nucleotide sequences in single_copy_nuc/
+```perl
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my %hash;
+my $gene;
+open FILE, "nuc_all_spe.fa" or die "can not open nuc_all_spe.fa\n";
+while (<FILE>) {
+        chomp;
+        if (/>/) {
+                s/>//;
+                $gene=$_;
+        } else {
+                $hash{$gene}.=$_;
+        }
+}
+
+my @fasta=<single_copy/*.fa>;
+system("mkdir single_copy_nuc");
+foreach my $fa (@fasta) {
+        open FIL, "$fa" or die "can not open $fa\n";
+        (my $name)=$fa=~/.*\/(.*)/;
+        open FIL1, ">single_copy_nuc/$name" or die "can not create single_copy_nuc/$name\n";
+        while (<FIL>) {
+                chomp;
+                if (/>/) {
+                        s/>//;
+                        if (/\_(ENS.*)/) {
+                                (my $gene)=$1;
+                                print FIL1 ">$_\n$hash{$gene}\n";
+                        } else {
+                                (my $gene)=$_;
+                                print FIL1 ">$_\n$hash{$gene}\n";
+                        }
+                }
+        }
+        close FIL;
+        close FIL1;
+}
+```
+```bash
+perl temp4.pl
+```
+all nucleotide sequences were in single_copy_nuc/    
+```bash
+cp temp2.pl temp5.pl
+```
+## according the steps of preparing paml input
+working dir: ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/OrthoFinder/Results_Nov30   
+```bash
+mkdir paml_input
+less Longest_Fugu.id.fa|perl -alne 'if (/>/){s/>//;$na="Fugu_".$_;print ">$na"}else{print}' >paml_input/Longest_Fugu.id.fa
+less Longest_Zebrafish.id.fa|perl -alne 'if (/>/){s/>//;$na="Zebrafish_".$_;print ">$na"}else{print}' >paml_input/Longest_Zebrafish.id.fa
+less Longest_Spottedgar.id.fa|perl -alne 'if (/>/){s/>//;$na="Spottedgar_".$_;print ">$na"}else{print}' >paml_input/Longest_Spottedgar.id.fa
+less Longest_Stickleback.id.fa|perl -alne 'if (/>/){s/>//;$na="Stickleback_".$_;print ">$na"}else{print}' >paml_input/Longest_Stickleback.id.fa
+less Longest_Medaka.id.fa|perl -alne 'if (/>/){s/>//;$na="Medaka_".$_;print ">$na"}else{print}' >paml_input/Longest_Medaka.id.fa
+less Longest_Platyfish_cds.fasta|perl -alne 'if (/>/){s/>//;$na="Platyfish_".$_;print ">$na"}else{print}' >paml_input/Longest_Platyfish_cds.fasta
+cp *_nuc.fa paml_input/
+less /media/HDD/cleaner_fish/genome/gene_family_2/Longest_Zebrafish_pep.fasta|perl -alne 'if (/>/){s/>//;$na="Zebrafish_".$_;print ">$na"}else{print}' >paml_input/Longest_Zebrafish_pep.fasta
+```
+prepare the orth list    
+```bash
+perl temp1.pl >ortho_list.txt
+vi correlation.txt
+perl prepare_input_paml.pl --input ortho_list.txt --seq_dir . --cor_list correlation.txt --output .
+```
+correlation.txt:    
+```bash
+refer   Longest_Zebrafish_pep.fasta
+Zebrafish       Longest_Zebrafish.id.fa
+Medaka  Longest_Medaka.id.fa
+Spottedgar      Longest_Spottedgar.id.fa
+Fugu    Longest_Fugu.id.fa
+Platyfish       Longest_Platyfish_cds.fasta
+Ocomp   Ocomp_nuc.fa
+Stickleback     Longest_Stickleback.id.fa
+Daru    Daru_nuc.fa
+Apoly   Apoly_nuc.fa
+Acura   Acura_nuc.fa
+Pmol    Pmol_nuc.fa
+Padel   Padel_nuc.fa
+```
