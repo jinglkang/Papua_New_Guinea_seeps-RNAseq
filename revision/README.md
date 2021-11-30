@@ -126,10 +126,36 @@ foreach my $spe (@spes) {
 ```
 ```bash
 perl temp2.pl >single_copy.concatenated.fasta
+fasta2phy.pl single_copy.concatenated.fasta >single_copy.concatenated.phy
 ```
 4091 single copy    
 contruct phylogenetic tree     
 ```bash
 #kang1234@celia-PowerEdge-T640 Tue Nov 30 11:46:22 ~/CO2-seeps/annotation
+nohup raxmlHPC -f a -m PROTGAMMAAUTO -p 12345 -x 12345 -# 100 -s single_copy.concatenated.phy -o Spottedgar -n single_copy.concatenated -T 24 > raxml.process 2>&1 &
+```
+***
+## second (annotate to same uniprot_id and select the longest)
+working dir (SNORLAX): ~/CO2-seeps/annotation/second   
+
+```bash
+cp Acura.fasta Apoly.fasta Daru.fasta Ocomp.fasta Padel.fasta Pmol.fasta second/
+for fa in *.fasta; do ./annotate1 --fasta ${fa}; done
+```
+## Orthofinder: my own work station (~/Desktop/PapueNewGuinea-new/longest_pep_sec)
+```bash
+orthofinder -f input_pep -a 32
+cd ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/OrthoFinder/Results_Nov30
+cp ~/Desktop/PapueNewGuinea-new/longest_pep/input_pep/OrthoFinder/Results_Nov30/temp1.pl ./
+cp ~/Desktop/PapueNewGuinea-new/longest_pep/input_pep/OrthoFinder/Results_Nov30/temp2.pl ./
+perl temp1.pl
+perl temp2.pl >single_copy.concatenated.fasta
+```
+2686 single-copy genes, 2683 single-copy genes in the final    
+
+```bash
+fasta2phy.pl single_copy.concatenated.fasta >single_copy.concatenated.phy
+scp single_copy.concatenated.phy kang1234@147.8.76.155:~/CO2-seeps/annotation/second
+# SNORLAX: ~/CO2-seeps/annotation/second
 nohup raxmlHPC -f a -m PROTGAMMAAUTO -p 12345 -x 12345 -# 100 -s single_copy.concatenated.phy -o Spottedgar -n single_copy.concatenated -T 24 > raxml.process 2>&1 &
 ```
