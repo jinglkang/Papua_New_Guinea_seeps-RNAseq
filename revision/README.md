@@ -127,3 +127,9 @@ foreach my $spe (@spes) {
 ```bash
 perl temp2.pl >single_copy.concatenated.fasta
 ```
+4091 single copy    
+contruct phylogenetic tree     
+```bash
+#kang1234@celia-PowerEdge-T640 Tue Nov 30 11:46:22 ~/CO2-seeps/annotation
+nohup raxmlHPC -f a -m PROTGAMMAAUTO -p 12345 -x 12345 -# 100 -s single_copy.concatenated.phy -o Spottedgar -n single_copy.concatenated > raxml.process 2>&1 &
+```
