@@ -293,3 +293,110 @@ Acura   Acura_nuc.fa
 Pmol    Pmol_nuc.fa
 Padel   Padel_nuc.fa
 ```
+### Estimate a phylogenetic tree based on the pep sequences of single copy genes between 6 PNG fish species
+```bash
+# Kang@fishlab3 Wed Dec 01 21:06:13 ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/OrthoFinder/Results_Nov30
+less single_copy.concatenated.phy|perl -lane '$i++;print "6\t1437114" if $i==1;if(/Apoly|Daru|Ocomp|Acura|Padel|Pmol/){print}' >single_copy.PNG.concatenated.phy
+scp single_copy.PNG.concatenated.phy kang1234@147.8.76.155:~/CO2-seeps/annotation/second
+nohup raxmlHPC -f a -m PROTGAMMAAUTO -p 12345 -x 12345 -# 100 -s  single_copy.PNG.concatenated.phy -o Ocomp -n single_copy.PNG.concatenated -T 24 > raxml.process 2>&1 &
+```
+***
+### concatenate the aligned genes according to final_orth_input_paml.txt
+```perl
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my %seq; my @spe; my $i;
+open LIST, "final_orth_input_paml.txt" or die "$!\n";
+while (<LIST>) {
+	chomp;
+	$i++;
+	my $orth=$_;
+	open FASTA, "$orth/final_alignment.fa" or die "can not open $orth/final_alignment.fa\n";
+	my $spe;
+	while (<FASTA>) {
+		chomp;
+		if (/>/) {
+			s/>//;
+			$spe=$_;
+			push @spe, $spe if $i==1;
+		} else {
+			$seq{$spe}.=$_;
+		}
+	}
+}
+
+foreach my $spe (@spe) {
+	my $seqs=$seq{$spe};
+	print ">$spe\n$seqs\n";
+}
+```
+save the concatenated sequences in single_copy.cds.concatenated.fasta    
+```bash
+perl temp2.pl >single_copy.cds.concatenated.fasta
+fasta2phy.pl single_copy.cds.concatenated.fasta >single_copy.cds.concatenated.phy
+```
+single_copy.cds.concatenated.phy (920,751) will be used as mcmctree input sequence file   
+
+#### Rough estimation of the substitution rate
+estimate the best nucleotide module (working dir: ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/OrthoFinder/Results_Nov30/paml_input)    
+```bash
+java -jar ~/software/jmodeltest-2.1.10/jModelTest.jar -d single_copy.cds.concatenated.fasta -g 4 -i -f -AIC -BIC -a
+```
+Best Models:    
+||Model|f(a)|f(c)|f(g)|f(t)|kappa|titv|Ra|Rb|Rc|Rd|Re|Rf|pInv|gamma|
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+|AIC|GTR+I+G|0.24|0.28|0.27|0.21|0.00|0.00|1.370|3.660|1.186|1.241|5.741|1.000|0.30|0.80|
+|BIC|GTR+I+G|0.24|0.28|0.27|0.21|0.00|0.00|1.370|3.660|1.186|1.241|5.741|1.000|0.30|0.80|
+##### put all files related to mcmctree to a same folder
+the input tree file: PNG2.tree    
+control file: baseml.ctl   
+```
+12 1
+((Zebrafish,(Ocomp,((Fugu,Stickleback),((Platyfish,Medaka),(((Acura,Apoly),(Padel,Pmol)),Daru)))))'@(1.4885, 1.652)',Spottedgar);
+```
+run baseml   
+```bash
+# Kang@fishlab3 Wed Dec 01 10:16:19 ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep
+mkdir mcmctree
+cd mcmctree
+mkdir baseml; cd baseml; baseml;
+```
+the control file of baseml: baseml.ctl in ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/mcmctree/baseml    
+Substitution rate is per time unit (in file "mlb"): 0.017619 +- 3501.972727 (use this value to set the prior for the mean substitution rate in the Bayesian analysis)     
+
+#### Estimation of the gradient and Hessian
+the input tree file: mcmc.tree    
+```
+12 2
+((Zebrafish,(Ocomp,((Fugu,Stickleback),((Platyfish,Medaka),(((Acura,Apoly),(Padel,Pmol)),Daru)))'B(.969, 1.509)'))'B(1.4885, 1.652)',Spottedgar);
+```
+in the control file (mcmctree.ctl): set "usedata = 3", "ndata = 1" (no partition)    
+```bash
+~/software/paml4.9j/src/mcmctree
+```
+The results were written to a file called out.BV   
+Rename the out.BV file as in.BV   
+```bash
+mv out.BV in.BV
+```
+in the control file (mcmctree.ctl): set "usedata = 3" (perform Bayesian estimation of divergence times using in.BV)
+```bash
+~/software/paml4.9j/src/mcmctree
+cat in.BV rst2 > 1.txt
+mv 1.txt in.BV
+```
+
+#### Estimation of divergence times with the approximate likelihood method
+in the control file (mcmctree.ctl): set "usedata = 2" (perform Bayesian estimation of divergence times using the approximate likelihood method), "ndata = 1" (no partition), "rgene_gamma = 1 55.6" (see the manual to calculate),     
+```bash
+~/software/paml4.9j/src/mcmctree
+```
+#### run again to check the convergence
+```bash
+#Kang@fishlab3 Wed Dec 01 22:44:10 ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/mcmctree/baseml
+cp mcmctree2.ctl in.BV ../sec
+#Kang@fishlab3 Wed Dec 01 22:45:21 ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/mcmctree/sec
+nohup ~/software/paml4.9j/src/mcmctree mcmctree2.ctl >mcmctree.process 2>&1 &
+```
