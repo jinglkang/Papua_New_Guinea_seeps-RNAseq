@@ -400,3 +400,54 @@ cp mcmctree2.ctl in.BV ../sec
 #Kang@fishlab3 Wed Dec 01 22:45:21 ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/mcmctree/sec
 nohup ~/software/paml4.9j/src/mcmctree mcmctree2.ctl >mcmctree.process 2>&1 &
 ```
+#### based on RAxML_bestTree.single_copy.PNG.concatenated for a time-calibrated ultrametric phylogenetic tree
+```bash
+# Kang@fishlab3 Thu Dec 02 15:22:56 ~/Desktop/PapueNewGuinea-new/bamm
+cp /media/HDD/cleaner_fish/genome/gene_family/cafetutorial_prep_r8s.py ./
+scp kang1234@147.8.76.155:~/CO2-seeps/annotation/second/RAxML_bestTree.single_copy.PNG.concatenated ./
+python cafetutorial_prep_r8s.py -i RAxML_bestTree.single_copy.PNG.concatenated -o r8s_ctl_file.txt -s 638853 -p 'Ocomp,Daru' -c '109.38'
+r8s -b -f r8s_ctl_file.txt > r8s_tmp.txt
+tail -n 1 r8s_tmp.txt | cut -c 16- > r8s_ultrametric.txt
+cp ~/software/bamm/examples/traits/fishsize/traitcontrol.txt ./
+```
+##### based on PNG.TPM.TMM.sqrt.matrix to calculate the average reads nb per gene per species
+less average_normal_expression.pl   
+```perl
+# ~/Documents/2019/香港大学/co2_seeps/EVE_release/run_again
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my %hash; my @spes=qw(Ocomp Daru Pmol Padel Acura Apoly);
+print "\tOcomp\tDaru\tPmol\tPadel\tAcura\tApoly\n";
+open FIL1, "PNG.TPM.TMM.sqrt.matrix" or die "can not open PNG.TPM.TMM.sqrt.matrix\n";
+while (<FIL1>) {
+	chomp;
+	my @a=split /\t/;
+	if (/^\s+/) {
+		for (my $i = 1; $i < @a; $i++) {
+			(my $spe)=$a[$i]=~/(\D+)/;
+			$hash{$spe} = [] unless exists $hash{$spe};
+			push @{$hash{$spe}}, $i;
+		}
+	} else {
+		my $gene=$a[0]; my $info;
+		foreach my $spe (@spes) {
+			my $total;
+			my $num=@{$hash{$spe}};
+			foreach my $i (@{$hash{$spe}}) {
+				$total+=$a[$i];
+			}
+			my $mean=$total/$num;
+			$mean=sprintf("%.2f",$mean);
+			$info.=$mean."\t";
+		}
+		$info=~s/\s+$//;
+		print "$gene\t$info\n";
+	}
+}
+```
+```bash
+# ~/Documents/2019/香港大学/co2_seeps/EVE_release/run_again
+perl average_normal_expression.pl >PNG_average_normal_expression.txt
+```
