@@ -451,3 +451,100 @@ while (<FIL1>) {
 # ~/Documents/2019/香港大学/co2_seeps/EVE_release/run_again
 perl average_normal_expression.pl >PNG_average_normal_expression.txt
 ```
+***
+#### assemble transcriptome for each individual
+kang1234@celia-PowerEdge-T640 Fri Dec 03 09:09:15 \~/CO2-seeps/high_index/paired/kraken/merge   
+vi run_trinity.pl   
+```perl
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my $spe=$ARGV[0];
+my @fastq=<*_1.fastq.gz>;
+my $ori1="trinity_out_dir.Trinity.fasta"; # Trinity original result fasta file
+my $ori2="trinity_out_dir.Trinity.fasta.gene_trans_map"; # Trinity original gene transcript map file
+foreach my $fastq (@fastq) {
+	if (-e "trinity_out_dir") {
+		system("rm -rf trinity_out_dir");
+	}
+	next if ! $fastq=~/${spe}/;
+	(my $ind)=$fastq=~/(.*)_/;
+	my $left=$fastq;
+	my $right=$ind."_2.fastq.gz";
+	system("export SHARED_DIR=\$PWD");
+	my $result1=$ind.".Trinity.fasta";
+	my $result2=$ind.".Trinity.fasta.gene_trans_map";
+	my $cmd1="docker run --rm -e LOCAL_USER_ID=`id -u \$USER` ";
+	$cmd1.="-u 1003:1003 -v \$SHARED_DIR:\$SHARED_DIR -w `pwd` sigenae\/drap ";
+	$cmd1.="Trinity --full_cleanup --seqType fq --max_memory 400G --bflyHeapSpaceMax 4G --CPU 22 ";
+	$cmd1.="--no_normalize_reads --left $left --right $right --SS_lib_type FR"; # exe Trinity
+	my $cmd2="mv $ori1 $result1"; # change Trinity fasta file name
+	my $cmd3="mv $ori2 $result2"; # change Trinity gene transcript map file name
+	unless (-e $result1) {
+		system($cmd1);
+		if (-e $ori1) {
+			system($cmd2);
+		} else {
+			die "there is no $ori1\n";
+		}
+		system($cmd3);
+	}
+}
+```
+
+```bash
+nohup perl run_trinity.pl Acura >Acura_trinity.process 2>&1 &
+```
+\[1\] 14420   
+***
+also do the assembly in my own workstation
+vi run_trinity.pl   
+```perl
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my @inds=qw(Pmol7 Pmol8 Pmol9 Pmol22 Pmol23 Pmol24);
+my $ori1="trinity_out_dir.Trinity.fasta"; # Trinity original result fasta file
+my $ori2="trinity_out_dir.Trinity.fasta.gene_trans_map"; # Trinity original gene transcript map file
+foreach my $ind (@inds) {
+        if (-e "trinity_out_dir") {
+                system("rm -rf trinity_out_dir");
+        }
+        my $left=$ind."_1.fastq.gz";;
+        my $right=$ind."_2.fastq.gz";
+        system("export SHARED_DIR=\$PWD");
+        my $result1=$ind.".Trinity.fasta";
+        my $result2=$ind.".Trinity.fasta.gene_trans_map";
+        my $cmd1="docker run --rm -e LOCAL_USER_ID=`id -u \$USER` ";
+		$cmd1.="-u 1002:1002 -v \$SHARED_DIR:\$SHARED_DIR -w `pwd` sigenae\/drap ";
+        $cmd1.="Trinity --full_cleanup --seqType fq --max_memory 400G --bflyHeapSpaceMax 4G --CPU 28 ";
+        $cmd1.="--no_normalize_reads --left $left --right $right --SS_lib_type FR"; # exe Trinity
+        my $cmd2="mv $ori1 $result1"; # change Trinity fasta file name
+        my $cmd3="mv $ori2 $result2"; # change Trinity gene transcript map file name
+        unless (-e $result1) {
+                system($cmd1);
+                if (-e $ori1) {
+                        system($cmd2);
+                } else {
+                        die "there is no $ori1\n";
+                }
+                system($cmd3);
+        }
+}
+```
+```bash
+nohup perl run_trinity.pl >Pmol_trinity.process 2>&1 &
+```
+\[1\] 17065   
+
+## Maybe we need not to assembly, build a phylogenetic tree based on SNPs dataset
+use Apoly geneome as reference    
+```bash
+# Kang@fishlab3 Fri Dec 03 16:59:48 ~/Desktop/PapueNewGuinea-new/merge_clean
+hisat2-build -p 30 -f apoly_primary_v1.fasta Apoly
+mkdir Apoly-align
+nohup perl hisat_sorted_bam.pl >map_sorted.process 2>&1 &
+# [1] 6284
+```
