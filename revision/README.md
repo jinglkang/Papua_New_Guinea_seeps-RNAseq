@@ -1473,3 +1473,33 @@ cp ../OG0033097_trait/r8s_ultrametric_1.txt ./
 cp ../OG0033097_trait/traitcontrol.txt ./
 bamm -c traitcontrol.txt
 ```
+***
+### prepare the table of final 32 single copy genes
+working dir: ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/OrthoFinder/Results_Nov30   
+vi temp8.pl   
+```perl
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+my %hash1;
+open FIL1, "Final_select_32_orth.txt" or die "can not open Final_select_32_orth.txt\n";
+while (<FIL1>) {
+	chomp;
+	$hash1{$_}++;
+}
+open FIL2, "paml_input/ortho_list.txt" or die "can not open paml_input/ortho_list.txt\n";
+while (<FIL2>) {
+	chomp;
+	my @a=split /\t/;
+	if ($hash1{$a[0]}) {
+		(my $gene)=$a[1]=~/Zebrafish_(.*)/;
+		print "$gene\n";
+	}
+}
+```
+
+```bash
+perl temp8.pl >Final_select_32_orth_zebrafish.txt
+```
+And submit to ensembl the get the gene description information    
