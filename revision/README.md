@@ -1447,6 +1447,7 @@ less r8s_ultrametric.txt|perl -alne 's/0\.000000/0\.000001/g;s/p21mp1//ig;print'
 ```
 
 ### bamm
+working dir: "~/Desktop/PapueNewGuinea-new/merge_clean/gene_capture/result/Total_orf/Final_ind_2/bamm"   
 ```bash
 perl temp1.pl OG0015521 >OG0015521.txt # S4A4
 perl temp1.pl OG0033097 >OG0033097.txt # CAH10
@@ -1471,6 +1472,73 @@ mv OG0002874.txt OG0002874_trait/
 cd G0002874_trait/
 cp ../OG0033097_trait/r8s_ultrametric_1.txt ./
 cp ../OG0033097_trait/traitcontrol.txt ./
+bamm -c traitcontrol.txt
+```
+
+Ion transport   
+OG0007437: CAC1H   
+OG0004968: CACB1   
+OG0020625: KCNH4   
+OG0022213: KCNK9   
+
+vi temp2.pl   
+```perl
+#!/usr/bin/perl -w
+use strict;
+use warnings;
+
+# to prepare files and mkdir dir for bamm
+my $gene=$ARGV[0];
+
+my $cmd1="perl temp1.pl $gene > $gene.txt"; # create the expression data for the gene
+
+my $dir=$gene."_trait";
+my $cmd2="mkdir $dir";
+my $cmd3="mv $gene.txt $dir"; # move the expression data to the created dir
+my $cmd4="cp OG0033097_trait/r8s_ultrametric_1.txt $dir"; # copy the tree to the dir
+
+system($cmd1);
+system($cmd2) unless -d $dir;
+system($cmd3);
+system($cmd4);
+
+# create the control file in the dir
+my $cont_f="OG0033097_trait/traitcontrol.txt";
+my $cont_n="$dir/traitcontrol.txt";
+open FIL1, $cont_f or die "can not open $cont_f\n";
+open FIL2, ">$cont_n" or die "can not create $cont_n\n";
+
+while (<FIL1>) {
+	chomp;
+	if (/traitfile\s=\sOG.*/) {
+		print FIL2 "traitfile = $gene.txt\n";
+	} else {
+		print FIL2 "$_\n";
+	}
+}
+```
+
+```bash
+perl temp2.pl OG0007437 # CAC1H
+cd OG0007437_trait/
+bamm -c traitcontrol.txt
+
+perl temp2.pl OG0004968 # CACB1
+cd OG0004968_trait/
+bamm -c traitcontrol.txt
+
+perl temp2.pl OG0020625 # KCNH4
+cd OG0020625_trait/
+bamm -c traitcontrol.txt
+
+perl temp2.pl OG0022213 # KCNK9
+cd OG0022213_trait/
+bamm -c traitcontrol.txt
+
+# pick a gene that is not positively selected
+# OG0005247: BMAL2
+perl temp2.pl OG0005247
+cd OG0005247_trait/
 bamm -c traitcontrol.txt
 ```
 ***
