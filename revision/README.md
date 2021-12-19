@@ -1542,6 +1542,13 @@ cd OG0005247_trait/
 bamm -c traitcontrol.txt
 ```
 ***
+### time: Apoly, Acura (24.4)
+working dir: ~/Desktop/PapueNewGuinea-new/merge_clean/gene_capture/result/Total_orf/Final_ind_2/bamm/three    
+```bash
+cd three/
+perl run_bamm.pl --genes OG0018190 OG0047687 OG0047666 OG0042779 OG0003332 OG0009912 OG0013663 OG0004147 OG0000695 OG0001576 OG0008887 OG0028437 OG0003717 OG0037099 OG0002143 OG0027161 OG0013197 --tree r8s_ultrametric_3.txt
+```
+***
 ### prepare the table of final 32 single copy genes
 working dir: ~/Desktop/PapueNewGuinea-new/longest_pep_sec/input_pep/OrthoFinder/Results_Nov30   
 vi temp8.pl   
